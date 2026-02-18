@@ -7,10 +7,11 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const baseStyle =
-    "relative text-gray-600 hover:text-blue-600 transition font-medium pb-1";
+  "relative text-gray-600 hover:text-blue-600 transition font-medium  pb-1 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-blue-600 after:transition-all after:duration-300";
 
-  const activeStyle =
-    "text-blue-600 after:absolute after:left-0 after:-bottom-1 after:w-full after:h-[2px] after:bg-blue-600 after:rounded";
+const activeStyle = "text-blue-600 after:w-full";
+
+
 
   return (
     <nav className="w-full bg-white shadow-sm border-b border-black/20">
@@ -67,7 +68,7 @@ const Navbar = () => {
 
             <NavLink
               to="/login"
-              className="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition"
+              className="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium  hover:bg-blue-600 hover:text-amber-50 transition"
             >
               Login
             </NavLink>
@@ -123,7 +124,7 @@ const Navbar = () => {
           <NavLink
             to="/login"
             onClick={() => setIsOpen(false)}
-            className="block bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition"
+            className="block bg-blue-100  px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 hover:text-amber-50 transition"
           >
             Login
           </NavLink>
