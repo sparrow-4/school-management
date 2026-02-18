@@ -2,8 +2,8 @@ import React from "react";
 
 const Header = () => {
   return (
-    <div className="relative overflow-hidden bg-white pt-16 pb-20 lg:pt-24 lg:pb-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div  id="home" className="relative overflow-hidden bg-white pt-16 pb-20 lg:pt-24 lg:pb-32">
+      <div  className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-black text-slate-900  leading-tight mb-6">
             College Event Portal
