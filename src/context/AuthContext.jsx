@@ -1,30 +1,60 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import emailjs from "@emailjs/browser";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
 
-  const ADMIN_EMAIL = "verthe30@gmail.com";
-  const ADMIN_PASSWORD = "123";
+  /* ================= INIT EMAILJS ================= */
+  useEffect(() => {
+    emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+  }, []);
 
-  const STUDENT_EMAIL = "student@gmail.com";
-  const STUDENT_PASSWORD = "123";
+  useEffect(() => {
+  const handleReload = () => {
+    localStorage.clear();
+  };
 
-  const TEACHER_EMAIL = "teacher@gmail.com";
-  const TEACHER_PASSWORD = "123";
+  window.addEventListener("beforeunload", handleReload);
+
+  return () => {
+    window.removeEventListener("beforeunload", handleReload);
+  };
+}, []);
+
+  /* ================= STATIC USERS ================= */
+  const USERS = {
+    admin: {
+      email: "thoyyibcherur@gmail.com",
+      password: "123",
+    },
+    student: {
+      email: "student@gmail.com",
+      password: "123",
+    },
+    teacher: {
+      email: "teacher@gmail.com",
+      password: "123",
+    },
+  };
 
   const [mail, setMail] = useState(null);
   const [error, setError] = useState("");
 
-  const login = (email, password, role) => {
+  /* ================= OTP GENERATOR ================= */
+  const generateOtp = () =>
+    Math.floor(100000 + Math.random() * 900000).toString();
+
+  /* =================================================
+                     LOGIN FUNCTION
+  ================================================= */
+  const login = async (email, password, role) => {
+
     setError("");
 
-    const generateOtp = () => {
-      return Math.floor(100000 + Math.random() * 900000).toString();
-    };
-
+    /* -------- BASIC VALIDATION -------- */
     if (!role) {
-      setError("Select a role.");
+      setError("Please select a role.");
       return false;
     }
 
@@ -35,68 +65,85 @@ export const AuthProvider = ({ children }) => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address.");
+      setError("Invalid email format.");
       return false;
     }
 
-    // ================= ADMIN =================
+    const user = USERS[role];
+
+    if (!user || email !== user.email || password !== user.password) {
+      setError("Invalid credentials.");
+      return false;
+    }
+
+    /* =================================================
+                     ADMIN FLOW (OTP)
+    ================================================= */
     if (role === "admin") {
-      if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-        setError("Invalid administrator credentials.");
-        return false;
-      }
 
       const otp = generateOtp();
-      const expiry = Date.now() + 1 * 60 * 1000;
+      const expiry = Date.now() + 5 * 60 * 1000; // 5 min
 
-      localStorage.setItem("otp", otp);
-      localStorage.setItem("otp_expiry", expiry.toString());
-      localStorage.setItem("otp_email", email);
-      localStorage.setItem("pending_role", "admin");
+      try {
 
-      console.log("Generated OTP:", otp);
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          {
+            to_email: email,
+            otp_code: otp,
+          }
+        );
 
-      setMail(email);
-      return true;
-    }
+        // Store temporary OTP data
+        localStorage.setItem("otp", otp);
+        localStorage.setItem("otp_expiry", expiry.toString());
+        localStorage.setItem("otp_email", email);
+        localStorage.setItem("pending_role", "admin");
 
-    // ================= STUDENT =================
-    if (role === "student") {
-      if (email !== STUDENT_EMAIL || password !== STUDENT_PASSWORD) {
-        setError("Invalid student credentials.");
+        setMail(email);
+
+        // 🔥 DEBUG ALERT
+        alert("OTP generated: " + otp);
+
+        return true;
+
+      } catch (err) {
+        console.error("EMAILJS ERROR:", err);
+        setError("Failed to send OTP email.");
         return false;
       }
-
-      setMail(email);
-      return true;
     }
 
-    // ================= TEACHER =================
-    if (role === "teacher") {
-      if (email !== TEACHER_EMAIL || password !== TEACHER_PASSWORD) {
-        setError("Invalid teacher credentials.");
-        return false;
-      }
+    /* =================================================
+                 STUDENT / TEACHER FLOW
+    ================================================= */
+    localStorage.setItem("role", role);
+    localStorage.setItem("session_active", "true");
 
-      setMail(email);
-      return true;
-    }
+    setMail(email);
 
-    setError("Invalid role.");
-    return false;
+    console.log("Stored role:", localStorage.getItem("role"));
+
+    return true;
   };
 
+  /* =================================================
+                    VERIFY OTP
+  ================================================= */
   const verifyOtp = (enteredOtp) => {
+
     const storedOtp = localStorage.getItem("otp");
     const expiry = localStorage.getItem("otp_expiry");
+    const pending = localStorage.getItem("pending_role");
 
-    if (!storedOtp || !expiry) {
-      setError("OTP not found. Please login again.");
+    if (!storedOtp || !expiry || pending !== "admin") {
+      setError("OTP session invalid. Please login again.");
       return false;
     }
 
     if (Date.now() > Number(expiry)) {
-      setError("OTP expired.");
+      setError("OTP expired. Please resend.");
       return false;
     }
 
@@ -104,38 +151,88 @@ export const AuthProvider = ({ children }) => {
       setError("Invalid OTP.");
       return false;
     }
+
+    // Grant admin access
     localStorage.setItem("role", "admin");
+    localStorage.setItem("session_active", "true");
+
+    // Remove temp data
     localStorage.removeItem("otp");
-  localStorage.removeItem("otp_expiry");
-  localStorage.removeItem("otp_email");
-  localStorage.removeItem("pending_role");
+    localStorage.removeItem("otp_expiry");
+    localStorage.removeItem("otp_email");
+    localStorage.removeItem("pending_role");
 
     return true;
   };
 
-  const resendOtp = () => {
-    const storedEmail = localStorage.getItem("otp_email");
+  /* =================================================
+                    RESEND OTP
+  ================================================= */
+  const resendOtp = async () => {
 
-    if (!storedEmail) {
+    const storedEmail = localStorage.getItem("otp_email");
+    const pending = localStorage.getItem("pending_role");
+
+    if (!storedEmail || pending !== "admin") {
       setError("Session expired. Please login again.");
       return false;
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = Date.now() + 1 * 60 * 1000;
+    const otp = generateOtp();
+    const expiry = Date.now() + 5 * 60 * 1000;
 
-    localStorage.setItem("otp", otp);
-    localStorage.setItem("otp_expiry", expiry.toString());
+    try {
 
-    console.log("Resent OTP:", otp);
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          to_email: storedEmail,
+          otp_code: otp,
+        }
+      );
 
-    setError("");
-    return true;
+      localStorage.setItem("otp", otp);
+      localStorage.setItem("otp_expiry", expiry.toString());
+
+      alert("New OTP: " + otp);
+
+      setError("");
+      return true;
+
+    } catch (err) {
+      console.error("RESEND ERROR:", err);
+      setError("Failed to resend OTP.");
+      return false;
+    }
+  };
+
+  /* =================================================
+                        LOGOUT
+  ================================================= */
+  const logout = () => {
+
+    localStorage.removeItem("role");
+    localStorage.removeItem("session_active");
+    localStorage.removeItem("otp");
+    localStorage.removeItem("otp_expiry");
+    localStorage.removeItem("otp_email");
+    localStorage.removeItem("pending_role");
+
+    setMail(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{ mail, login, resendOtp, verifyOtp, error, setError }}
+      value={{
+        mail,
+        login,
+        verifyOtp,
+        resendOtp,
+        logout,
+        error,
+        setError,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Home from "./pages/home/Home";
 import Login from "./pages/Login/Login";
@@ -33,14 +34,20 @@ const App = () => {
       <Route path="/otp" element={<Otp />} />
 
       {/* ================= ADMIN ================= */}
-      <Route path="/admin" element={<Admin />}>
+      <Route path="/admin" element={
+        <ProtectedRoute allowedRole="admin">
+      <Admin />
+    </ProtectedRoute>
+  }>
         <Route index element={<div>Admin Dashboard</div>} />
         <Route path="dashboard" element={<div>Admin Dashboard</div>} />
         <Route path="users" element={<ManageUsers />} />
       </Route>
 
       {/* ================= STUDENT ================= */}
-      <Route path="/student" element={<Student />}>
+      <Route path="/student" element={<ProtectedRoute allowedRole="student">
+      <Student />
+    </ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="addevent" element={<AddEvent />} />
@@ -49,7 +56,9 @@ const App = () => {
       </Route>
 
       {/* ================= TEACHER ================= */}
-      <Route path="/teacher" element={<Teacher />}>
+      <Route path="/teacher" element={<ProtectedRoute allowedRole="teacher">
+      <Teacher />
+    </ProtectedRoute>}>
         <Route index element={<TeacherDashboard />} />
         <Route path="dashboard" element={<TeacherDashboard />} />
         <Route path="add-students" element={<AddStudents />} />

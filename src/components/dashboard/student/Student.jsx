@@ -2,8 +2,21 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar2 from "./Navbar2";
 import BottomNav from "./BottomNav";
+import { useEffect, useState } from "react";
+import Loader from "../../Loader";
 
 const Student = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <Loader />;
   return (
     <div className="flex h-screen overflow-hidden">
 

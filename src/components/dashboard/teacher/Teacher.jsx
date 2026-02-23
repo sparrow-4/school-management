@@ -1,11 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
 import { Outlet } from "react-router-dom";
 import BottomNav from "./BottomNav";
+import Loader from "../../Loader";
 
 const Teacher = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <Loader />;
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
 

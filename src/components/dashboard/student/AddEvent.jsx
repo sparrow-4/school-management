@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { UploadCloud, Calendar } from "lucide-react";
+import { UploadCloud } from "lucide-react";
+import { useEvents } from "../../../context/EventContext"
 
- function AddEvent() {
+function AddEvent() {
+  const { addEvent } = useEvents();
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -10,19 +13,55 @@ import { UploadCloud, Calendar } from "lucide-react";
     poster: null,
   });
 
+  const [preview, setPreview] = useState(null);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
+
     if (files) {
-      setFormData({ ...formData, poster: files[0] });
+      const file = files[0];
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          poster: reader.result,
+        }));
+
+        setPreview(reader.result); // 🔥 ADD THIS LINE
+      };
+
+      reader.readAsDataURL(file);
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(formData);
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  const eventData = {
+    ...formData,
+    poster: preview,
   };
+
+  addEvent(eventData);
+  alert("Event Submitted Successfully!");
+
+  setFormData({
+    title: "",
+    description: "",
+    date: "",
+    category: "Academic",
+    poster: null,
+  });
+
+  setPreview(null);
+};
+  
 
   return (
     <div className="min-h-screen  bg-gray-100 flex items-center justify-center p-6">
@@ -124,6 +163,15 @@ import { UploadCloud, Calendar } from "lucide-react";
                 className="hidden"
                 onChange={handleChange}
               />
+              {preview && (
+                <div className="mt-4">
+                  <img
+                    src={preview}
+                    alt="Poster Preview"
+                    className="w-48 h-48 object-cover rounded-lg shadow-md"
+                  />
+                </div>
+              )}
             </label>
           </div>
 
@@ -147,4 +195,5 @@ import { UploadCloud, Calendar } from "lucide-react";
     </div>
   );
 }
+
 export default AddEvent;

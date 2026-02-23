@@ -28,11 +28,11 @@ const Otp = () => {
      BLOCK DIRECT ACCESS
   =============================== */
   useEffect(() => {
-    const pending = localStorage.getItem("pending_role");
-    if (pending !== "admin") {
-      navigate("/login");
-    }
-  }, [navigate]);
+  const pending = localStorage.getItem("pending_role");
+  if (pending !== "admin") {
+    navigate("/login", { replace: true });
+  }
+}, []);
 
   /* ===============================
      LOADER DELAY
@@ -120,7 +120,7 @@ const Otp = () => {
     const success = verifyOtp(finalOtp);
 
     if (success) {
-      navigate("/admin");
+      navigate("/admin" , { replace: true });
     }
   };
 
@@ -160,7 +160,7 @@ const Otp = () => {
         {/* Header */}
         <div className="flex items-center p-4 border-b border-slate-100">
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login", { replace: true })}
             className="p-2 rounded-lg text-slate-600 hover:bg-slate-50 transition"
           >
             <FiArrowLeft className="text-xl" />
@@ -249,7 +249,7 @@ const Otp = () => {
         <div className="flex p-6 text-center justify-center bg-slate-50 border-t border-slate-100">
           <span
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-600 transition cursor-pointer"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login", { replace: true })}
           >
             <GoArrowLeft className="text-lg" />
             Back to Login

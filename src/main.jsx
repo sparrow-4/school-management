@@ -5,6 +5,7 @@ import App from "./App";
 import "./index.css";
 import { LoadingProvider } from "./context/LoadingContext";
 import { AuthProvider } from "./context/AuthContext";
+import { EventProvider } from "./context/EventContext";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -12,8 +13,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
        <LoadingProvider>
       <AuthProvider>
-       
-          <App />
+       <EventProvider>
+         <App />
+       </EventProvider>
+         
       
       </AuthProvider>
     </LoadingProvider>

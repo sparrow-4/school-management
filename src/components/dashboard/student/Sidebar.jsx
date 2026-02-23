@@ -53,7 +53,7 @@ const Sidebar = () => {
         {/* Logout Section */}
         <div className="mt-auto pt-6">
           <div
-            onClick={() => console.log("logout logic here")}
+            onClick={() => navigate("/login", { replace: true })}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 cursor-pointer transition-all duration-200"
           >
             Logout
