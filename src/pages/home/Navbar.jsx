@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef  } from "react";
 import { MdOutlineSchool } from "react-icons/md";
 import { HiMenu, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
+import { IoLogOutOutline } from "react-icons/io5";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);

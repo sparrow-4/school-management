@@ -1,12 +1,16 @@
 import fst from "../assets/images/fst.png";
 import scnd from "../assets/images/scnd.png";
-import ips from "../assets/images/LALLBIPS.jpeg";
+import ips from "../assets/images/trd.png";
+
+
+
 import { CiMail } from "react-icons/ci";
 import { MdOutlineCall } from "react-icons/md";
 import { CiLocationOn } from "react-icons/ci";
 import { MdAlternateEmail } from "react-icons/md";
 import { MdOutlineShare } from "react-icons/md";
 import { LiaAwardSolid } from "react-icons/lia";
+
 
 
 export const events = [
@@ -34,7 +38,7 @@ export const events = [
     id: 3,
     category: "Seminar",
     categoryColor: "bg-amber-600",
-    title: "Death Ceremony Arun Sharma IPS",
+    title: "Future of AI in Education",
     date: "October 20, 2024 • 11:00 AM",
     organizer: "Placement Cell",
     location: "Seminar Hall A",
@@ -68,3 +72,13 @@ export const quickLinks = [
     MdOutlineShare,
     MdAlternateEmail,
   ];
+
+
+export  const menuItems = [
+    { icon: "dashboard", label: "Dashboard Overview", active: true },
+    { icon: "verified_user", label: "Approve Teachers" },
+    { icon: "event_available", label: "Approve Events" },
+    { icon: "group", label: "Manage Users" },
+    { icon: "analytics", label: "Reports" },
+    { icon: "settings", label: "System Settings" },
+  ];  
