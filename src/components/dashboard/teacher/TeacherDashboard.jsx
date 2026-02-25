@@ -1,166 +1,144 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+
+const COLORS = ["#3b82f6", "#ec4899"];
 
 const TeacherDashboard = () => {
   const [students, setStudents] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("1");
 
- 
+  const loggedTeacher = JSON.parse(localStorage.getItem("loggedTeacher"));
+
   const upcomingEvents = [
-    {
-      id: 1,
-      title: "AI Symposium",
-      date: "Oct 24, 2025",
-      status: "approved",
-    },
-    {
-      id: 2,
-      title: "Hackathon",
-      date: "Dec 5, 2025",
-      status: "approved",
-    },
+    { id: 1, title: "AI Symposium", date: "Oct 24, 2025", status: "approved" },
+    { id: 2, title: "Hackathon", date: "Dec 5, 2025", status: "approved" },
   ];
 
   useEffect(() => {
-    const savedStudents = localStorage.getItem("students");
-    if (savedStudents) {
-      setStudents(JSON.parse(savedStudents));
-    }
+    const saved = localStorage.getItem("students");
+    if (saved) setStudents(JSON.parse(saved));
   }, []);
 
-  const maleCount = students.filter((s) => s.gender === "Male").length;
-  const femaleCount = students.filter((s) => s.gender === "Female").length;
-  const totalStudents = students.length;
+  /* ================= FILTER DEPARTMENT ================= */
+  const departmentStudents = useMemo(() => {
+    if (!loggedTeacher?.department) return [];
+    return students.filter(
+      (s) => s.className === loggedTeacher.department
+    );
+  }, [students, loggedTeacher]);
 
-  const malePercentage =
-    totalStudents > 0 ? Math.round((maleCount / totalStudents) * 100) : 0;
+  /* ================= FILTER BY SELECTED YEAR ================= */
+  const yearStudents = useMemo(() => {
+    return departmentStudents.filter(
+      (s) => s.section === selectedYear
+    );
+  }, [departmentStudents, selectedYear]);
 
-  const femalePercentage =
-    totalStudents > 0 ? Math.round((femaleCount / totalStudents) * 100) : 0;
+  const total = yearStudents.length;
+  const male = yearStudents.filter((s) => s.gender === "Male").length;
+  const female = yearStudents.filter((s) => s.gender === "Female").length;
 
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
+  const genderData = [
+    { name: "Male", value: male },
+    { name: "Female", value: female },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-slate-50 p-8 space-y-12">
 
-      {/*  STUDENT GENDER SECTION */}
-      <div className="bg-white rounded-3xl shadow-md p-8 mb-12">
-
-        {/* Title */}
-        <div className="flex items-center justify-between mb-10">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Student Overview
-          </h1>
-
-         
-        </div>
-
-        {/* Circles */}
-        <div className="grid grid-cols-1 md:grid-cols-3  place-items-center">
-
-          {/* Male Card */}
-          <div className="flex flex-col items-center group">
-
-            <div className="relative w-40 h-40">
-
-              <svg className="w-40 h-40 -rotate-90">
-                <circle
-                  cx="80"
-                  cy="80"
-                  r={radius}
-                  stroke="#f1f5f9"
-                  strokeWidth="12"
-                  fill="transparent"
-                />
-
-                <circle
-                  cx="80"
-                  cy="80"
-                  r={radius}
-                  stroke="#3b82f6"
-                  strokeWidth="12"
-                  fill="transparent"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={
-                    circumference - (malePercentage / 100) * circumference
-                  }
-                  strokeLinecap="round"
-                  className="transition-all duration-700"
-                />
-              </svg>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-blue-600">
-                  {malePercentage}%
-                </span>
-                <span className="text-xs text-black mt-1">
-                  Male
-                </span>
-              </div>
-
-            </div>
-
-            <p className="mt-4 text-gray-600 font-medium">
-              {maleCount} Students
+      {/* ================= HOD SECTION ================= */}
+      {loggedTeacher?.isHod && (
+        <>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">
+              {loggedTeacher.department} Dashboard
+            </h1>
+            <p className="text-gray-500 mt-2">
+              Department Year Analysis
             </p>
-
           </div>
 
-           <span className="text-xl ">
-            Total Students: {totalStudents}
-          </span>
-
-
-          {/* Female Card */}
-          <div className="flex flex-col items-center group">
-
-            <div className="relative w-40 h-40">
-
-              <svg className="w-40 h-40 -rotate-90">
-                <circle
-                  cx="80"
-                  cy="80"
-                  r={radius}
-                  stroke="#f1f5f9"
-                  strokeWidth="12"
-                  fill="transparent"
-                />
-
-                <circle
-                  cx="80"
-                  cy="80"
-                  r={radius}
-                  stroke="#ec4899"
-                  strokeWidth="12"
-                  fill="transparent"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={
-                    circumference - (femalePercentage / 100) * circumference
-                  }
-                  strokeLinecap="round"
-                  className="transition-all duration-700"
-                />
-              </svg>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-pink-500">
-                  {femalePercentage}%
-                </span>
-                <span className="text-xs text-black mt-1">
-                  Female
-                </span>
-              </div>
-
-            </div>
-
-            <p className="mt-4 text-gray-600 font-medium">
-              {femaleCount} Students
-            </p>
-
+          {/* YEAR SELECTOR */}
+          <div className="flex gap-4">
+            {["1", "2", "3"].map((year) => (
+              <button
+                key={year}
+                onClick={() => setSelectedYear(year)}
+                className={`px-6 py-2 rounded-xl font-medium transition ${
+                  selectedYear === year
+                    ? "bg-blue-600 text-white"
+                    : "bg-white shadow"
+                }`}
+              >
+                {year} Year
+              </button>
+            ))}
           </div>
 
-        </div>
-      </div>
-      {/* BOTTOM SECTION - UPCOMING EVENTS */}
+          {/* SUMMARY */}
+          <div className="grid md:grid-cols-3 gap-6 mt-6">
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <h3 className="text-sm text-gray-500">
+                Total Students
+              </h3>
+              <p className="text-3xl font-bold text-blue-600 mt-2">
+                {total}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <h3 className="text-sm text-gray-500">Male</h3>
+              <p className="text-3xl font-bold text-indigo-600 mt-2">
+                {male}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <h3 className="text-sm text-gray-500">Female</h3>
+              <p className="text-3xl font-bold text-pink-600 mt-2">
+                {female}
+              </p>
+            </div>
+          </div>
+
+          {/* PIE CHART */}
+          <div className="bg-white p-8 rounded-3xl shadow mt-8">
+            <h2 className="text-xl font-semibold mb-6">
+              Gender Distribution - {selectedYear} Year
+            </h2>
+
+            <div className="h-80">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={genderData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    dataKey="value"
+                    label
+                  >
+                    {genderData.map((entry, index) => (
+                      <Cell key={index} fill={COLORS[index]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ================= UPCOMING EVENTS (ALL TEACHERS) ================= */}
       <div>
         <h2 className="text-xl font-semibold text-gray-800 mb-6">
           Upcoming Events
@@ -170,7 +148,7 @@ const TeacherDashboard = () => {
           {upcomingEvents.map((event) => (
             <div
               key={event.id}
-              className="bg-white rounded-2xl p-5 shadow border hover:shadow-lg transition"
+              className="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition"
             >
               <h3 className="font-semibold text-gray-800">
                 {event.title}
@@ -178,7 +156,6 @@ const TeacherDashboard = () => {
               <p className="text-sm text-gray-500 mt-1">
                 {event.date}
               </p>
-
               <span className="inline-block mt-3 px-3 py-1 text-xs rounded-full bg-green-100 text-green-700">
                 {event.status.toUpperCase()}
               </span>

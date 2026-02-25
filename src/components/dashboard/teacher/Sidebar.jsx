@@ -3,12 +3,12 @@ import { LayoutDashboard, ClipboardList, User, LogOut, UserPlus2 } from "lucide-
 import { MdOutlineSchool } from "react-icons/md";
 import { NavLink, useNavigate } from "react-router-dom";
 
-
 const Sidebar = () => {
+
+  const loggedTeacher = JSON.parse(localStorage.getItem("loggedTeacher"));
 
   const navStyle = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-     relative overflow-hidden
      ${isActive
       ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
       : "text-gray-600 hover:bg-gray-100 hover:text-blue-600"}
@@ -17,15 +17,15 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    
-    // Go to Home page
+    localStorage.removeItem("role");
+    localStorage.removeItem("session_active");
+    localStorage.removeItem("loggedTeacher");
     navigate("/");
   };
 
   return (
     <div className="hidden md:flex w-72 h-screen bg-linear-to-b from-white to-blue-50 border-r border-gray-200 p-6 flex-col justify-between">
 
-      {/* Top Section */}
       <div>
 
         {/* Profile Card */}
@@ -35,15 +35,14 @@ const Sidebar = () => {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-800">
-              Smith
+              {loggedTeacher?.name || "Teacher"}
             </h2>
             <p className="text-xs text-gray-500 tracking-wide">
-              HEAD
+              {loggedTeacher?.isHod ? "HEAD" : "FACULTY"}
             </p>
           </div>
         </div>
 
-        {/* Navigation */}
         <ul className="space-y-3">
 
           <li>
@@ -53,12 +52,15 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          <li>
-            <NavLink to="/teacher/add-students" className={navStyle}>
-              <UserPlus2 size={18} />
-              Add Students
-            </NavLink>
-          </li>
+          {/* SHOW ONLY IF HOD */}
+          {loggedTeacher?.isHod && (
+            <li>
+              <NavLink to="/teacher/add-students" className={navStyle}>
+                <UserPlus2 size={18} />
+                Add Students
+              </NavLink>
+            </li>
+          )}
 
           <li>
             <NavLink to="/teacher/review-events" className={navStyle}>
@@ -77,14 +79,13 @@ const Sidebar = () => {
         </ul>
       </div>
 
-      {/* Bottom Logout */}
       <div
         onClick={handleLogout}
         className="p-4 rounded-xl bg-red-50 hover:bg-red-100 transition cursor-pointer flex items-center gap-3 text-red-500 text-sm font-medium"
       >
         <LogOut size={18} />
         Logout
-      </div> 
+      </div>
 
     </div>
   );

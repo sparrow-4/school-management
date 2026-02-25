@@ -1,142 +1,192 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+
+const initialFormState = {
+  name: "",
+  dob: "",
+  section: "",
+  roll: "",
+  gender: "",
+  address: "",
+  email: "",
+  password: "",
+};
 
 const AddStudents = () => {
+  const loggedTeacher = JSON.parse(localStorage.getItem("loggedTeacher"));
+
+  if (!loggedTeacher?.isHod) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600 text-xl font-semibold">
+        Access Denied — Only HOD can manage students.
+      </div>
+    );
+  }
+
+  const departmentClass = loggedTeacher.department;
+
   const [showForm, setShowForm] = useState(false);
-  const [students, setStudents] = useState([]);
-
-
-  const [editId, setEditId] = useState(null);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    age: "",
-    className: "",
-    section: "",
-    roll: "",
-    gender: "",
-    address: "",
+  const [students, setStudents] = useState(() => {
+    const saved = localStorage.getItem("students");
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // ✅ Load from localStorage
-  useEffect(() => {
-    const savedStudents = localStorage.getItem("students");
-    if (savedStudents) {
-      setStudents(JSON.parse(savedStudents));
-    }
-  }, []);
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState(initialFormState);
 
-  // ✅ Save to localStorage
   useEffect(() => {
-    if (students.length > 0) {
-      localStorage.setItem("students", JSON.stringify(students));
-    }
+    localStorage.setItem("students", JSON.stringify(students));
   }, [students]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+  /* ================= UNIQUE ROLL GENERATOR ================= */
+  const generateRollNumber = () => {
+    const departmentCode = departmentClass
+      .replace(/\s+/g, "")
+      .toUpperCase()
+      .slice(0, 3); // max 3 letters
+
+    const departmentStudents = students.filter(
+      (s) => s.className === departmentClass
+    );
+
+    const existingNumbers = departmentStudents.map((s) => {
+      const numberPart = s.roll.replace(`EDT${departmentCode}`, "");
+      return parseInt(numberPart, 10);
     });
+
+    const maxNumber = existingNumbers.length
+      ? Math.max(...existingNumbers)
+      : 0;
+
+    const nextNumber = maxNumber + 1;
+
+    return `EDT${departmentCode}${String(nextNumber).padStart(3, "0")}`;
   };
 
+  /* ================= AGE CALCULATOR ================= */
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const diff = Date.now() - birthDate.getTime();
+    const ageDate = new Date(diff);
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
+  };
+
+  /* ================= HANDLE CHANGE ================= */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  /* ================= SUBMIT ================= */
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (editId) {
-      // ✏ Update student
-      const updatedStudents = students.map((student) =>
-        student.id === editId ? { ...student, ...formData } : student
-      );
-      setStudents(updatedStudents);
-      setEditId(null);
-    } else {
-      // ➕ Add student
-      const newStudent = {
-        id: Date.now(),
-        ...formData,
-      };
-      setStudents((prev) => [...prev, newStudent]);
+    const today = new Date();
+    const birthDate = new Date(formData.dob);
+
+    if (birthDate > today) {
+     toast.error("Date of birth cannot be in the future.");
+      return;
     }
 
-    setFormData({
-      name: "",
-      age: "",
-      className: "",
-      section: "",
-      roll: "",
-      gender: "",
-      address: "",
-    });
+    if (calculateAge(formData.dob) < 15) {
+  toast.error("Student must be at least 15 years old.");
+  return;
+}
 
+    let finalRoll = formData.roll;
+
+    // Generate roll only for new student
+    if (!editId) {
+      finalRoll = generateRollNumber();
+    }
+
+    const cleanName = formData.name
+      .toLowerCase()
+      .replace(/\s+/g, "");
+
+    const finalEmail = `${cleanName}${finalRoll}@student.edueventschool.com`;
+    const finalPassword = `${cleanName}!${finalRoll}`;
+
+    const emailExists = students.some(
+      (s) =>
+        s.email.toLowerCase().trim() ===
+          finalEmail.toLowerCase().trim() &&
+        s.id !== editId
+    );
+
+    if (emailExists) {
+    toast.error("Student already exists.");
+      return;
+    }
+
+    const studentData = {
+      ...formData,
+      roll: finalRoll,
+      email: finalEmail,
+      password: finalPassword,
+      className: departmentClass,
+    };
+
+    if (editId) {
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === editId ? { ...s, ...studentData } : s
+        )
+      );
+      setEditId(null);
+    } else {
+      setStudents((prev) => [
+        ...prev,
+        { ...studentData, id: Date.now() },
+      ]);
+    }
+
+    setFormData(initialFormState);
     setShowForm(false);
   };
 
-  // 🗑 Delete
   const handleDelete = (id) => {
-    const filtered = students.filter((student) => student.id !== id);
-    setStudents(filtered);
+    setStudents((prev) => prev.filter((s) => s.id !== id));
   };
 
-  // ✏ Edit
   const handleEdit = (student) => {
     setFormData(student);
     setEditId(student.id);
     setShowForm(true);
   };
 
-
-
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-4 md:p-10">
+    <div className="min-h-screen bg-slate-50 p-6">
+      
 
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-blue-600 tracking-tight">
-            Student Management
-          </h2>
-          <p className="text-slate-500 text-sm mt-1">
-            Manage and organize student records
-          </p>
-        </div>
+        <h2 className="text-2xl font-bold text-blue-600">
+          Student Management ({departmentClass})
+        </h2>
 
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl shadow-md 
-        hover:shadow-lg hover:scale-105 transition-all duration-300"
+          className="bg-blue-600 text-white px-5 py-2 rounded-xl"
         >
           + Add Student
         </button>
       </div>
 
-      {/* Form */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40">
+          <div className="bg-white p-8 rounded-2xl w-full max-w-3xl">
 
-          {/* Dark Overlay */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowForm(false)}
-          ></div>
-
-          {/* Modal Box */}
-          <div className="relative bg-white w-full max-w-4xl mx-4 rounded-3xl shadow-2xl p-8 animate-fadeIn">
-
-            {/* Close Button */}
-            <button
-              onClick={() => setShowForm(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-xl"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-2xl font-bold text-blue-600 mb-6">
-              {editId ? "Update Student" : "Add New Student"}
+            <h3 className="text-xl font-semibold mb-6">
+              {editId ? "Update Student" : "Add Student"}
             </h3>
 
             <form
               onSubmit={handleSubmit}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 gap-5"
             >
 
               <input
@@ -145,52 +195,44 @@ const AddStudents = () => {
                 onChange={handleChange}
                 placeholder="Full Name"
                 required
-                className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
+                className="border rounded-xl px-4 py-3"
               />
 
               <input
-                type="number"
-                name="age"
-                value={formData.age}
+                type="date"
+                name="dob"
+                value={formData.dob}
                 onChange={handleChange}
-                placeholder="Age"
                 required
-                className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
+                max={new Date().toISOString().split("T")[0]}
+                className="border rounded-xl px-4 py-3"
               />
 
               <input
-                name="className"
-                value={formData.className}
-                onChange={handleChange}
-                placeholder="Class"
-                required
-                className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
+                value={editId ? formData.roll : generateRollNumber()}
+                readOnly
+                className="border bg-gray-100 rounded-xl px-4 py-3"
               />
 
-              <input
+              <select
                 name="section"
                 value={formData.section}
                 onChange={handleChange}
-                placeholder="Section"
                 required
-                className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
-              />
-
-              <input
-                name="roll"
-                value={formData.roll}
-                onChange={handleChange}
-                placeholder="Roll Number"
-                required
-                className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
-              />
+                className="border rounded-xl px-4 py-3"
+              >
+                <option value="">Select Year</option>
+                <option value="1">1 Year</option>
+                <option value="2">2 Year</option>
+                <option value="3">3 Year</option>
+              </select>
 
               <select
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
                 required
-                className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
+                className="border rounded-xl px-4 py-3"
               >
                 <option value="">Select Gender</option>
                 <option>Male</option>
@@ -203,88 +245,98 @@ const AddStudents = () => {
                 onChange={handleChange}
                 placeholder="Address"
                 required
-                className="md:col-span-2 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-800 outline-none transition"
+                className="md:col-span-2 border rounded-xl px-4 py-3"
+              />
+
+              <input
+                value={departmentClass}
+                readOnly
+                className="md:col-span-2 border bg-gray-100 rounded-xl px-4 py-3"
+              />
+
+              <input
+                type="email"
+                value={
+                  editId
+                    ? formData.email
+                    : `${formData.name
+                        .toLowerCase()
+                        .replace(/\s+/g, "")}${generateRollNumber()}@student.edueventschool.com`
+                }
+                readOnly
+                className="md:col-span-2 border bg-gray-100 rounded-xl px-4 py-3"
+              />
+
+              <input
+                type="text"
+                value={
+                  editId
+                    ? formData.password
+                    : `${formData.name
+                        .toLowerCase()
+                        .replace(/\s+/g, "")}!${generateRollNumber()}`
+                }
+                readOnly
+                className="md:col-span-2 border bg-gray-100 rounded-xl px-4 py-3"
               />
 
               <div className="md:col-span-2 text-right">
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-8 py-3 rounded-xl shadow-md 
-                    hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  className="bg-blue-600 text-white px-8 py-3 rounded-xl"
                 >
-                  {editId ? "Update Student" : "Save Student"}
+                  {editId ? "Update" : "Save"}
                 </button>
               </div>
+
             </form>
           </div>
         </div>
       )}
 
-      {/* Student Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {students.map((student) => (
-          <div
-            key={student.id}
-            className="bg-white rounded-3xl p-6 border border-slate-200 
-      shadow-sm hover:shadow-2xl hover:-translate-y-2 
-      transition-all duration-500 group"
-          >
-            {/* Top Section */}
-            <div className="flex items-center gap-4 mb-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {students
+          .filter((s) => s.className === departmentClass)
+          .map((student) => (
+            <div
+              key={student.id}
+              className="bg-white p-6 rounded-2xl shadow"
+            >
+              <h3 className="text-lg font-semibold">
+                {student.name}
+              </h3>
 
-              {/* Profile Circle */}
-              <div className="w-14 h-14 rounded-full bg-blue-600 text-white 
-        flex items-center justify-center text-lg font-semibold 
-        shadow-md group-hover:scale-110 transition duration-300">
-                {student.name.charAt(0).toUpperCase()}
-              </div>
-
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-slate-800">
-                  {student.name}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Class {student.className} - {student.section}
-                </p>
-              </div>
-
-              <span className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
-                Roll {student.roll}
-              </span>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-2 text-sm text-slate-600 mb-6">
-              <p><span className="font-medium text-slate-800">Age:</span> {student.age}</p>
-              <p><span className="font-medium text-slate-800">Gender:</span> {student.gender}</p>
-              <p className="line-clamp-2">
-                <span className="font-medium text-slate-800">Address:</span> {student.address}
+              <p className="text-sm text-gray-500">
+                {student.className} - {student.section} Year
               </p>
-            </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleEdit(student)}
-                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl 
-          hover:bg-blue-700 hover:scale-105 shadow-md 
-          transition-all duration-300"
-              >
-                Edit
-              </button>
+              <p className="text-sm mt-2">Roll: {student.roll}</p>
+              <p className="text-sm">
+                DOB: {new Date(student.dob).toLocaleDateString()}
+              </p>
+              <p className="text-sm">
+                Age: {calculateAge(student.dob)}
+              </p>
+              <p className="text-sm">Email: {student.email}</p>
 
-              <button
-                onClick={() => handleDelete(student.id)}
-                className="flex-1 bg-blue-100 text-blue-700 py-2.5 rounded-xl 
-          hover:bg-blue-200 hover:scale-105 
-          transition-all duration-300"
-              >
-                Delete
-              </button>
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => handleEdit(student)}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-xl"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(student.id)}
+                  className="flex-1 bg-gray-200 py-2 rounded-xl"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
+
     </div>
   );
 };

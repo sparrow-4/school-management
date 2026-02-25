@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
-import { useEvents } from "../../../context/EventContext"
+import { useEvents } from "../../../context/EventContext";
 
 function AddEvent() {
   const { addEvent } = useEvents();
@@ -14,6 +14,7 @@ function AddEvent() {
   });
 
   const [preview, setPreview] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -27,8 +28,7 @@ function AddEvent() {
           ...prev,
           poster: reader.result,
         }));
-
-        setPreview(reader.result); // 🔥 ADD THIS LINE
+        setPreview(reader.result);
       };
 
       reader.readAsDataURL(file);
@@ -40,97 +40,93 @@ function AddEvent() {
     }
   };
 
-const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const eventData = {
-    ...formData,
-    poster: preview,
+    const result = addEvent({
+      ...formData,
+      poster: preview,
+    });
+
+    if (!result.success) {
+      setErrors(result.errors);
+      return;
+    }
+
+    alert("Event Submitted Successfully!");
+
+    setFormData({
+      title: "",
+      description: "",
+      date: "",
+      category: "Academic",
+      poster: null,
+    });
+
+    setPreview(null);
+    setErrors({});
   };
 
-  addEvent(eventData);
-  alert("Event Submitted Successfully!");
-
-  setFormData({
-    title: "",
-    description: "",
-    date: "",
-    category: "Academic",
-    poster: null,
-  });
-
-  setPreview(null);
-};
-  
-
   return (
-    <div className="min-h-screen  bg-gray-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       <div className="w-full max-w-full bg-white rounded-2xl shadow-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800">
           Organize a New Event
         </h2>
-        <p className="text-gray-500 mt-1 mb-6">
-          Fill in the details below to submit your event proposal for approval.
-        </p>
+        <h1 className="pb-2 text-gray-400">
+          Fill in the detials to submit your event proposal for approval
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Event Title */}
           <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Event Title
-            </label>
+            <h1 className="pb-1 font-medium text-gray-700">Event Title</h1>
             <input
               type="text"
               name="title"
-              placeholder="e.g. Annual Tech Symposium 2024"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Event Title"
+              className="w-full border px-4 py-3 rounded-lg"
               value={formData.title}
               onChange={handleChange}
             />
+            {errors.title && (
+              <p className="text-red-500 text-sm">{errors.title}</p>
+            )}
           </div>
 
-          {/* Description */}
           <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Description
-            </label>
+            <h1 className="pb-1 font-medium text-gray-700">Description</h1>
             <textarea
               name="description"
-              rows="4"
-              placeholder="Describe the agenda, target audience, and key highlights..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+              placeholder="Description"
+              className="w-full border px-4 py-3 rounded-lg"
               value={formData.description}
               onChange={handleChange}
-            ></textarea>
+            />
+            {errors.description && (
+              <p className="text-red-500 text-sm">{errors.description}</p>
+            )}
           </div>
 
-          {/* Date + Category */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Date */}
             <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Event Date
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="date"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={formData.date}
-                  onChange={handleChange}
-                />
-
-              </div>
+              <h1 className="pb-1 font-medium text-gray-700">Date</h1>
+              <input
+                type="date"
+                name="date"
+                className="w-full border px-4 py-3 rounded-lg"
+                value={formData.date}
+                onChange={handleChange}
+              />
+              {errors.date && (
+                <p className="text-red-500 text-sm">{errors.date}</p>
+              )}
             </div>
 
-            {/* Category */}
             <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Category
-              </label>
+              <h1 className="pb-1 font-medium text-gray-700">Category</h1>
               <select
                 name="category"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full  border px-4 py-3 rounded-lg"
                 value={formData.category}
                 onChange={handleChange}
               >
@@ -142,50 +138,37 @@ const handleSubmit = (e) => {
             </div>
           </div>
 
-          {/* Upload Poster */}
           <div>
-            <label className="block font-medium text-gray-700 mb-2">
+            <h1 className="pb-1 font-medium text-gray-700">Upload Poster</h1>
+            <label className="flex flex-col items-center border-2 border-dashed p-6 rounded-lg cursor-pointer">
+              <UploadCloud className="w-8 h-8 mb-2" />
               Upload Poster
-            </label>
-
-            <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl p-10 cursor-pointer hover:bg-gray-50 transition">
-              <UploadCloud className="w-10 h-10 text-gray-400 mb-3" />
-              <p className="text-gray-600">
-                Click to upload or drag and drop
-              </p>
-              <p className="text-sm text-gray-400 mt-1">
-                PNG, JPG or PDF (max. 5MB)
-              </p>
               <input
                 type="file"
                 name="poster"
-                accept=".png,.jpg,.jpeg,.pdf"
+                accept=".png,.jpg,.jpeg"
                 className="hidden"
                 onChange={handleChange}
               />
-              {preview && (
-                <div className="mt-4">
-                  <img
-                    src={preview}
-                    alt="Poster Preview"
-                    className="w-48 h-48 object-cover rounded-lg shadow-md"
-                  />
-                </div>
-              )}
             </label>
+
+            {errors.poster && (
+              <p className="text-red-500 text-sm">{errors.poster}</p>
+            )}
+
+            {preview && (
+              <img
+                src={preview}
+                className="w-40 h-40 mt-3 rounded-lg"
+                alt="preview"
+              />
+            )}
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-4 pt-4">
-            <button
-              type="button"
-              className="text-gray-600 font-medium hover:text-gray-800"
-            >
-              Save Draft
-            </button>
+          <div className="flex justify-end">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg"
             >
               Submit Proposal
             </button>

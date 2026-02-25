@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import { Toaster } from "react-hot-toast";
 import Home from "./pages/home/Home";
 import Login from "./pages/Login/Login";
 import Otp from "./pages/Otp";
@@ -23,9 +23,12 @@ import TeacherDashboard from "./components/dashboard/teacher/TeacherDashboard";
 import AddStudents from "./components/dashboard/teacher/AddStudents";
 import ReviewEvents from "./components/dashboard/teacher/ReviewEvents";
 import TeacherProfile from "./components/dashboard/teacher/TeacherProfile";
+import Overview from "./components/dashboard/admin/Overview";
 
 const App = () => {
   return (
+  <>
+  <Toaster position="top-right" />
     <Routes>
 
       {/* PUBLIC */}
@@ -39,8 +42,8 @@ const App = () => {
       <Admin />
     </ProtectedRoute>
   }>
-        <Route index element={<div>Admin Dashboard</div>} />
-        <Route path="dashboard" element={<div>Admin Dashboard</div>} />
+        <Route index element={<Overview />} />
+        <Route path="overview" element={<Overview />} />
         <Route path="users" element={<ManageUsers />} />
       </Route>
 
@@ -67,6 +70,7 @@ const App = () => {
       </Route>
 
     </Routes>
+    </>
   );
 };
 

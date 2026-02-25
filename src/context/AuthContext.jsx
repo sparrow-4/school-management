@@ -10,17 +10,7 @@ export const AuthProvider = ({ children }) => {
     emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
   }, []);
 
-  useEffect(() => {
-  const handleReload = () => {
-    localStorage.clear();
-  };
-
-  window.addEventListener("beforeunload", handleReload);
-
-  return () => {
-    window.removeEventListener("beforeunload", handleReload);
-  };
-}, []);
+ 
 
   /* ================= STATIC USERS ================= */
   const USERS = {
@@ -31,11 +21,7 @@ export const AuthProvider = ({ children }) => {
     student: {
       email: "student@gmail.com",
       password: "123",
-    },
-    teacher: {
-      email: "teacher@gmail.com",
-      password: "123",
-    },
+    }
   };
 
   const [mail, setMail] = useState(null);
@@ -69,12 +55,53 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
 
-    const user = USERS[role];
+    /* ================= ADMIN CHECK ================= */
+if (role === "admin") {
+  const admin = USERS.admin;
 
-    if (!user || email !== user.email || password !== user.password) {
-      setError("Invalid credentials.");
-      return false;
-    }
+  if (email !== admin.email || password !== admin.password) {
+    setError("Invalid credentials.");
+    return false;
+  }
+}
+
+/* ================= STUDENT CHECK ================= */
+if (role === "student") {
+ const students = JSON.parse(localStorage.getItem("students")) || [];
+
+const foundStudent = students.find(
+  (s) =>
+    s.email.toLowerCase().trim() === email.toLowerCase().trim() &&
+    s.password === password
+);
+
+if (!foundStudent) {
+  setError("Invalid student credentials.");
+  return false;
+}
+
+localStorage.setItem("loggedStudent", JSON.stringify(foundStudent));
+}
+
+/* ================= TEACHER CHECK (DYNAMIC) ================= */
+if (role === "teacher") {
+
+  const teachers = JSON.parse(localStorage.getItem("teachers")) || [];
+
+  const foundTeacher = teachers.find(
+    (t) =>
+      t.email.toLowerCase().trim() === email.toLowerCase().trim() &&
+      t.password === password
+  );
+
+  if (!foundTeacher) {
+    setError("Invalid teacher credentials.");
+    return false;
+  }
+
+  // Store teacher data for session
+  localStorage.setItem("loggedTeacher", JSON.stringify(foundTeacher));
+}
 
     /* =================================================
                      ADMIN FLOW (OTP)
@@ -82,7 +109,7 @@ export const AuthProvider = ({ children }) => {
     if (role === "admin") {
 
       const otp = generateOtp();
-      const expiry = Date.now() + 5 * 60 * 1000; // 5 min
+      const expiry = Date.now() + 1 * 60 * 1000; // 1 min
 
       try {
 
@@ -161,6 +188,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("otp_expiry");
     localStorage.removeItem("otp_email");
     localStorage.removeItem("pending_role");
+    localStorage.removeItem("loggedTeacher");
+    localStorage.removeItem("loggedStudent");
 
     return true;
   };

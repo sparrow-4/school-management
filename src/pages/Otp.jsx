@@ -5,6 +5,7 @@ import { GoArrowLeft } from "react-icons/go";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Loader from "../components/Loader";
+import { MdOutlineLogout } from "react-icons/md";
 
 const Otp = () => {
   const { mail, verifyOtp, resendOtp, error, setError } = useAuth();
@@ -241,7 +242,7 @@ const Otp = () => {
               className="w-full py-4 flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-600/20 transition"
             >
               <span>Verify and Sign In</span>
-              <span className="material-symbols-outlined text-lg">login</span>
+              <MdOutlineLogout/>
             </button>
           </form>
         </div>
