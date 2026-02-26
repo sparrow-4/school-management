@@ -50,7 +50,7 @@ const AddStudents = () => {
     );
 
     const existingNumbers = departmentStudents.map((s) => {
-      const numberPart = s.roll.replace(`EDT${departmentCode}`, "");
+      const numberPart = s.roll.replace(`EDS${departmentCode}`, "");
       return parseInt(numberPart, 10);
     });
 
@@ -60,7 +60,7 @@ const AddStudents = () => {
 
     const nextNumber = maxNumber + 1;
 
-    return `EDT${departmentCode}${String(nextNumber).padStart(3, "0")}`;
+    return `EDS${departmentCode}${String(nextNumber).padStart(3, "0")}`;
   };
 
   /* ================= AGE CALCULATOR ================= */
@@ -108,7 +108,7 @@ const AddStudents = () => {
       .toLowerCase()
       .replace(/\s+/g, "");
 
-    const finalEmail = `${cleanName}${finalRoll}@student.edueventschool.com`;
+    const finalEmail = `${cleanName}${finalRoll}@edueventschool.com`;
     const finalPassword = `${cleanName}!${finalRoll}`;
 
     const emailExists = students.some(

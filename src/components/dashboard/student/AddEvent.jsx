@@ -12,33 +12,53 @@ function AddEvent() {
     category: "Academic",
     poster: null,
   });
+  
 
   const [preview, setPreview] = useState(null);
   const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+ const handleChange = (e) => {
+  const { name, value, files } = e.target;
 
-    if (files) {
-      const file = files[0];
-      const reader = new FileReader();
+  if (files) {
+    const file = files[0];
 
-      reader.onloadend = () => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const MAX_WIDTH = 600;   // 🔥 reduce size
+        const scaleSize = MAX_WIDTH / img.width;
+
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6); // 🔥 compression
+
         setFormData((prev) => ({
           ...prev,
-          poster: reader.result,
+          poster: compressedBase64,
         }));
-        setPreview(reader.result);
-      };
 
-      reader.readAsDataURL(file);
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+        setPreview(compressedBase64);
+      };
+    };
+
+    reader.readAsDataURL(file);
+  } else {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
 
   const handleSubmit = (e) => {
     e.preventDefault();

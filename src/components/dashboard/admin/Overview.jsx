@@ -156,8 +156,8 @@ const Overview = () => {
             Gender Distribution
           </h2>
 
-          <div className="h-64">
-            <ResponsiveContainer>
+          <div className="w-full min-h-[350px] min-w-0">
+  <ResponsiveContainer width="100%" aspect={1.5}>
               <PieChart>
                 <Pie
                   data={genderData}

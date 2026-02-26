@@ -4,8 +4,19 @@ import { useEvents } from "../../../context/EventContext";
 function MyEvents() {
   const { events, deleteEvent, updateEvent } = useEvents();
 
+  const loggedStudent = JSON.parse(localStorage.getItem("loggedStudent"));
+
   const [editId, setEditId] = useState(null);
   const [editedData, setEditedData] = useState({});
+
+  if (!loggedStudent) return null;
+
+  // ✅ ONLY THIS STUDENT + ONLY APPROVED
+  const approvedEvents = events.filter(
+    (event) =>
+      event.studentId === loggedStudent.id &&
+      event.status === "approved"
+  );
 
   const handleEditClick = (event) => {
     setEditId(event.id);
@@ -22,36 +33,33 @@ function MyEvents() {
     setEditId(null);
   };
 
-const handleImageChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
 
+    if (!file) return;
+
+    const reader = new FileReader();
     reader.onloadend = () => {
       setEditedData((prev) => ({
         ...prev,
-        poster: reader.result, // ✅ Base64 string
+        poster: reader.result,
       }));
     };
 
     reader.readAsDataURL(file);
-  } else {
-    setEditedData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-};
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h2 className="text-2xl font-bold mb-6">My Events</h2>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <h2 className="text-2xl font-bold mb-6">My Approved Events</h2>
 
-      {events.length === 0 ? (
-        <p className="text-gray-500">No events added yet.</p>
+      {approvedEvents.length === 0 ? (
+        <p className="text-gray-500">
+          No approved events yet.
+        </p>
       ) : (
         <div className="grid md:grid-cols-3 gap-6">
-          {events.map((event) => (
+          {approvedEvents.map((event) => (
             <div
               key={event.id}
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition"
@@ -66,67 +74,64 @@ const handleImageChange = (e) => {
 
               <div className="p-5">
                 {editId === event.id ? (
-                 <>
+                  <>
+                    <input
+                      type="file"
+                      accept=".png,.jpg,.jpeg"
+                      onChange={handleImageChange}
+                      className="mb-3"
+                    />
 
+                    <input
+                      type="text"
+                      name="title"
+                      value={editedData.title}
+                      onChange={handleChange}
+                      className="w-full border p-2 rounded mb-2"
+                    />
 
-  {/* Change Image */}
-  <input
-    type="file"
-    accept=".png,.jpg,.jpeg"
-    onChange={handleImageChange}
-    className="mb-3"
-  />
+                    <textarea
+                      name="description"
+                      value={editedData.description}
+                      onChange={handleChange}
+                      className="w-full border p-2 rounded mb-2"
+                    />
 
-  <input
-    type="text"
-    name="title"
-    value={editedData.title}
-    onChange={handleChange}
-    className="w-full border p-2 rounded mb-2"
-  />
+                    <input
+                      type="date"
+                      name="date"
+                      value={editedData.date}
+                      onChange={handleChange}
+                      className="w-full border p-2 rounded mb-3"
+                    />
 
-  <textarea
-    name="description"
-    value={editedData.description}
-    onChange={handleChange}
-    className="w-full border p-2 rounded mb-2"
-  />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        className="bg-green-600 text-white px-4 py-2 rounded text-sm"
+                      >
+                        Save
+                      </button>
 
-  <input
-    type="date"
-    name="date"
-    value={editedData.date}
-    onChange={handleChange}
-    className="w-full border p-2 rounded mb-3"
-  />
-
-  <div className="flex gap-2">
-    <button
-      onClick={handleSave}
-      className="bg-green-600 text-white px-4 py-2 rounded text-sm"
-    >
-      Save
-    </button>
-
-    <button
-      onClick={() => setEditId(null)}
-      className="bg-gray-400 text-white px-4 py-2 rounded text-sm"
-    >
-      Cancel
-    </button>
-  </div>
-</>
+                      <button
+                        onClick={() => setEditId(null)}
+                        className="bg-gray-400 text-white px-4 py-2 rounded text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <>
                     <h3 className="text-xl font-bold">
                       {event.title}
                     </h3>
 
-                    <p className="text-gray-500 text-sm mt-2 font-bold">
+                    <p className="text-gray-500 text-sm mt-2">
                       {event.description}
                     </p>
 
-                    <div className="flex justify-between items-center mt-3">
+                    <div className="flex justify-between items-center mt-4">
                       <div className="text-sm text-gray-600 font-medium">
                         <p>📅 {event.date}</p>
                         <p>🏷 {event.category}</p>
@@ -135,14 +140,14 @@ const handleImageChange = (e) => {
                       <div>
                         <button
                           onClick={() => handleEditClick(event)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
                         >
                           Edit
                         </button>
 
                         <button
                           onClick={() => deleteEvent(event.id)}
-                          className="ml-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700"
+                          className="ml-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
                         >
                           Delete
                         </button>

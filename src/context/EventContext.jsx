@@ -3,19 +3,18 @@ import { createContext, useContext, useState, useEffect } from "react";
 const EventContext = createContext();
 
 export const EventProvider = ({ children }) => {
-
   const [events, setEvents] = useState(() => {
-    const savedEvents = localStorage.getItem("events");
-    return savedEvents ? JSON.parse(savedEvents) : [];
+    const stored = localStorage.getItem("events");
+    return stored ? JSON.parse(stored) : [];
   });
 
+  /* ================= SYNC STORAGE ================= */
   useEffect(() => {
     localStorage.setItem("events", JSON.stringify(events));
   }, [events]);
 
+  /* ================= VALIDATION ================= */
   const validateEvent = (data) => {
-
-    const today = new Date().toISOString().split("T")[0];
     const errors = {};
 
     if (!data.title?.trim()) {
@@ -27,10 +26,15 @@ export const EventProvider = ({ children }) => {
     }
 
     if (!data.date) {
-      errors.date = "Date is required";
-    } 
-    else if (data.date < today) {
-      errors.date = "Past date not allowed";
+      errors.date = "Event date is required";
+    } else {
+      const selectedDate = new Date(data.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        errors.date = "Past dates are not allowed";
+      }
     }
 
     if (!data.poster) {
@@ -40,47 +44,72 @@ export const EventProvider = ({ children }) => {
     return errors;
   };
 
-  const addEvent = (event) => {
-
-    const errors = validateEvent(event);
-
-    if (Object.keys(errors).length > 0) {
-      return { success: false, errors };
-    }
-
-    const newEvent = {
-      ...event,
-      id: Date.now()
-    };
-
-    setEvents((prev) => [...prev, newEvent]);
-
-    return { success: true };
-  };
-
-  const deleteEvent = (id) => {
-    setEvents((prev) => prev.filter((event) => event.id !== id));
-  };
-
-  const updateEvent = (updatedEvent) => {
-
-  const errors = validateEvent(updatedEvent);
+  /* ================= ADD EVENT ================= */
+  const addEvent = (eventData) => {
+  const errors = validateEvent(eventData);
 
   if (Object.keys(errors).length > 0) {
     return { success: false, errors };
   }
 
-  setEvents((prev) =>
-    prev.map((event) =>
-      event.id === updatedEvent.id ? updatedEvent : event
-    )
+  // 🔥 DEFINE loggedStudent HERE
+  const loggedStudent = JSON.parse(
+    localStorage.getItem("loggedStudent")
   );
+
+  const newEvent = {
+    ...eventData,
+    id: Date.now(),
+    status: "pending",
+    studentId: loggedStudent?.id,  
+    department: loggedStudent?.className,
+    createdAt: new Date().toISOString(),
+  };
+
+  setEvents((prev) => [...prev, newEvent]);
 
   return { success: true };
 };
+
+  /* ================= APPROVE / REJECT ================= */
+  const updateEventStatus = (id, status) => {
+    const loggedTeacher = JSON.parse(localStorage.getItem("loggedTeacher"));
+
+    // Only HOD can approve/reject
+    if (!loggedTeacher?.isHod) {
+      return;
+    }
+
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === id ? { ...e, status } : e
+      )
+    );
+  };
+
+  /* ================= UPDATE EVENT ================= */
+  const updateEvent = (updatedEvent) => {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === updatedEvent.id ? { ...e, ...updatedEvent } : e
+      )
+    );
+  };
+
+  /* ================= DELETE ================= */
+  const deleteEvent = (id) => {
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+  };
+
   return (
     <EventContext.Provider
-      value={{ events, addEvent, deleteEvent, updateEvent }}
+      value={{
+        events,
+        addEvent,
+        updateEventStatus,
+        updateEvent,
+        deleteEvent,
+      }}
     >
       {children}
     </EventContext.Provider>

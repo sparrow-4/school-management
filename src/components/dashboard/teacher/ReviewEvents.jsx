@@ -1,164 +1,151 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useEvents } from "../../../context/EventContext";
+import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ReviewEvents = () => {
+  const { events, updateEventStatus } = useEvents();
+  const [activeTab, setActiveTab] = useState("all");
 
-  const [activeTab, setActiveTab] = useState("pending");
+  // ✅ DECLARE FIRST
+  const loggedTeacher = JSON.parse(
+    localStorage.getItem("loggedTeacher")
+  );
 
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "AI Symposium",
-      date: "Oct 24, 2025",
-      description:
-        "A grand technical symposium featuring workshops, coding competitions and guest lectures from industry experts.",
-      status: "pending",
-      image:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-    },
-    {
-      id: 2,
-      title: "Blockchain Conference",
-      date: "Nov 12, 2025",
-      description:
-        "Annual open tech meet discussing blockchain trends in fintech startups and real world solutions.",
-      status: "approved",
-      image:
-        "https://images.unsplash.com/photo-1640161704729-cbe966a08476",
-    },
-    {
-      id: 3,
-      title: "Hackathon",
-      date: "Dec 5, 2025",
-      description:
-        "24 hour national level coding hackathon conducted by final year students association.",
-      status: "rejected",
-      image:
-        "https://images.unsplash.com/photo-1518770660439-4636190af475",
-    },
-  ]);
+  const isHod = loggedTeacher?.isHod;
 
-  const handleStatusChange = (id, newStatus) => {
-    setEvents(prev =>
-      prev.map(event =>
-        event.id === id ? { ...event, status: newStatus } : event
-      )
+  // ✅ ONLY EVENTS FROM SAME DEPARTMENT
+  const departmentEvents = useMemo(() => {
+    if (!loggedTeacher?.department) return [];
+    return events.filter(
+      (event) =>
+        event.department === loggedTeacher.department
     );
-  };
+  }, [events, loggedTeacher]);
 
+  // ✅ FILTER BY TAB
   const filteredEvents =
     activeTab === "all"
-      ? events
-      : events.filter(event => event.status === activeTab);
+      ? departmentEvents
+      : departmentEvents.filter(
+          (event) => event.status === activeTab
+        );
+
+  const handleApprove = (id) => {
+    updateEventStatus(id, "approved");
+    toast.success("Event Approved Successfully 🎉");
+  };
+
+  const handleReject = (id) => {
+    updateEventStatus(id, "rejected");
+    toast.error("Event Rejected ❌");
+  };
 
   return (
-    <div className="p-6 overflow-y-auto flex-1 bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 space-y-8">
 
-      {/* PAGE TITLE */}
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-        Review Events
-      </h2>
+      <h1 className="text-3xl font-bold text-slate-800">
+        Event Review Panel
+      </h1>
 
       {/* TABS */}
-      <div className="flex gap-6 mb-6 border-b">
-        {["all", "pending", "approved", "rejected"].map(tab => (
+      <div className="flex gap-6 border-b">
+        {["all", "pending", "approved", "rejected"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`relative pb-2 capitalize font-medium transition duration-300
-            ${activeTab === tab ? "text-blue-600" : "text-gray-600"}`}
+            className={`pb-3 capitalize font-medium transition ${
+              activeTab === tab
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-blue-600"
+            }`}
           >
             {tab}
-            <span
-              className={`absolute left-0 bottom-0 h-[2px] w-full bg-blue-600 transform origin-left transition-transform duration-300
-              ${activeTab === tab ? "scale-x-100" : "scale-x-0"}`}
-            ></span>
           </button>
         ))}
       </div>
 
-      {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-
-        {filteredEvents.map(event => (
-          <div
-            key={event.id}
-            className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition duration-300 overflow-hidden flex flex-col h-full border"
-          >
-
-            {/* IMAGE */}
-            <div className="relative overflow-hidden">
-              <img
-                src={`${event.image}?auto=format&fit=crop&w=400&q=60`}
-                alt=""
-                className="w-full h-40 object-cover group-hover:scale-105 transition duration-300"
-              />
-
-              {/* STATUS BADGE */}
-              <span
-                className={`absolute top-3 right-3 px-3 py-1 text-[11px] rounded-full font-medium backdrop-blur
-                ${
-                  event.status === "pending"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : event.status === "approved"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
+      {/* EVENTS */}
+      {filteredEvents.length === 0 ? (
+        <p className="text-gray-400 text-center py-10">
+          No events found
+        </p>
+      ) : (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <AnimatePresence>
+            {filteredEvents.map((event) => (
+              <motion.div
+                key={event.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition"
               >
-                {event.status.toUpperCase()}
-              </span>
-            </div>
+                {event.poster && (
+                  <img
+                    src={event.poster}
+                    alt={event.title}
+                    className="w-full h-44 object-cover"
+                  />
+                )}
 
-            {/* CONTENT */}
-            <div className="p-4 flex flex-col h-full">
+                <div className="p-5 space-y-3">
 
-              <h2 className="text-[15px] font-semibold text-gray-800 mb-1">
-                {event.title}
-              </h2>
-
-              <p className="text-xs text-gray-400 mb-2">
-                {event.date}
-              </p>
-
-              <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                {event.description}
-              </p>
-
-              {/* ACTIONS */}
-              {event.status === "pending" && (
-                <div className="flex gap-2 mt-auto pt-3 border-t">
-
-                  <button
-                    onClick={() =>
-                      handleStatusChange(event.id, "approved")
-                    }
-                    className="w-full bg-green-600 text-white text-sm py-2 rounded-lg hover:bg-green-700 transition"
+                  <span
+                    className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                      event.status === "pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : event.status === "approved"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
                   >
-                    Approve
-                  </button>
+                    {event.status.toUpperCase()}
+                  </span>
 
-                  <button
-                    onClick={() =>
-                      handleStatusChange(event.id, "rejected")
-                    }
-                    className="w-full border border-red-400 text-red-500 text-sm py-2 rounded-lg hover:bg-red-50 transition"
-                  >
-                    Reject
-                  </button>
+                  <h3 className="text-lg font-bold text-slate-800">
+                    {event.title}
+                  </h3>
+
+                  <p className="text-sm text-slate-500">
+                    📅 {event.date}
+                  </p>
+
+                  <p className="text-sm text-slate-600 line-clamp-3">
+                    {event.description}
+                  </p>
+
+                  {/* ONLY HOD CAN APPROVE */}
+                  {isHod && event.status === "pending" && (
+                    <div className="flex gap-3 pt-3">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.05 }}
+                        onClick={() => handleApprove(event.id)}
+                        className="flex-1 bg-green-600 text-white py-2 rounded-xl"
+                      >
+                        Approve
+                      </motion.button>
+
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.05 }}
+                        onClick={() => handleReject(event.id)}
+                        className="flex-1 border border-red-500 text-red-500 py-2 rounded-xl"
+                      >
+                        Reject
+                      </motion.button>
+                    </div>
+                  )}
 
                 </div>
-              )}
-
-            </div>
-          </div>
-        ))}
-
-        {filteredEvents.length === 0 && (
-          <div className="text-center text-gray-400 mt-10 col-span-full">
-            No events found
-          </div>
-        )}
-
-      </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 };

@@ -24,6 +24,7 @@ import AddStudents from "./components/dashboard/teacher/AddStudents";
 import ReviewEvents from "./components/dashboard/teacher/ReviewEvents";
 import TeacherProfile from "./components/dashboard/teacher/TeacherProfile";
 import Overview from "./components/dashboard/admin/Overview";
+import AdminSettings from "./components/dashboard/admin/AdminSettings";
 
 const App = () => {
   return (
@@ -45,6 +46,7 @@ const App = () => {
         <Route index element={<Overview />} />
         <Route path="overview" element={<Overview />} />
         <Route path="users" element={<ManageUsers />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
 
       {/* ================= STUDENT ================= */}
