@@ -1,8 +1,9 @@
 import { useEvents } from "../../../context/EventContext";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 function StudentDashboard() {
-  const { events, updateEvent } = useEvents();
+  const { events, updateEvent, approvedEvents } = useEvents();
   const loggedStudent = JSON.parse(localStorage.getItem("loggedStudent"));
 
   const [editId, setEditId] = useState(null);
@@ -18,9 +19,7 @@ function StudentDashboard() {
     (e) => e.status === "pending"
   );
 
-  const approvedEvents = studentEvents.filter(
-    (e) => e.status === "approved"
-  );
+  
 
   const rejectedEvents = studentEvents.filter(
     (e) => e.status === "rejected"
@@ -29,6 +28,14 @@ function StudentDashboard() {
   const recentEvents = [...studentEvents]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 6);
+   
+  const allApprovedEvents = events.filter(
+  (e) =>
+    e.status === "approved" &&
+    e.studentId !== loggedStudent.id
+);
+
+ 
 
   /* ================= EDIT LOGIC ================= */
 
@@ -78,7 +85,7 @@ function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-10 space-y-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-10 space-y-12 ">
 
       {/* HEADER */}
       <div>
@@ -209,6 +216,61 @@ function StudentDashboard() {
           </div>
         )}
       </div>
+
+     {/* ALL APPROVED EVENTS */}
+<div className="overflow-hidden w-full">
+  <h2 className="text-2xl font-semibold text-slate-800 mb-6">
+    Approved Events (Campus)
+  </h2>
+
+  {approvedEvents.length === 0 ? (
+    <p className="text-slate-400">No approved events yet.</p>
+  ) : (
+    <motion.div 
+      className="flex gap-6 p-3"
+      
+      /* Infinite animation */
+      animate={{ x: ["0%", "-50%"] }}
+
+       transition={{
+       ease: "linear",
+         duration: 20,
+         repeat: Infinity,
+       }}
+    >
+      {[...approvedEvents, ...approvedEvents].map((event, index) => (
+        <div
+          key={index}
+          className=" rounded-2xl overflow-hidden shadow-md min-w-[300px]"
+        >
+          {event.poster && (
+            <img
+              src={event.poster}
+              alt={event.title}
+              className="w-full h-44 object-cover"
+            />
+          )}
+
+          <div className="p-5 space-y-2">
+            <h3 className="text-lg font-bold">{event.title}</h3>
+
+            <p className="text-sm text-slate-500">
+              📅 {event.date}
+            </p>
+
+            <span className="bg-green-100 text-green-700 px-3 py-1 text-xs rounded-full">
+              APPROVED
+            </span>
+
+            <p className="text-sm text-slate-600">
+              {event.description}
+            </p>
+          </div>
+        </div>
+      ))}
+    </motion.div>
+  )}
+</div>
 
     </div>
   );

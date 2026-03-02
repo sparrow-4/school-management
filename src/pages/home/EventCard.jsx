@@ -1,20 +1,31 @@
 import React from "react";
 import { FaCalendarAlt, FaUser, FaMapMarkerAlt } from "react-icons/fa";
 
+const categoryColors = {
+  Academic: "bg-blue-500",
+  Technical: "bg-purple-500",
+  Cultural: "bg-pink-500",
+  Sports: "bg-green-500",
+};
+
 const EventCard = ({ event }) => {
-  
-    
+  const imageSrc = event.poster || event.image || "/fallback.jpg";
+
+  const categoryColor =
+    categoryColors[event.category] || "bg-gray-500";
+
   return (
-    <div className="group bg-white  rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-slate-100">
+    <div className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-slate-100">
 
       <div className="aspect-video relative overflow-hidden">
         <img
-          src={event.image}
+          src={imageSrc}
           alt={event.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
+
         <div className="absolute top-4 left-4">
-          <span className={`${event.categoryColor} text-white text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full`}>
+          <span className={`${categoryColor} text-white text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full`}>
             {event.category}
           </span>
         </div>
@@ -30,13 +41,15 @@ const EventCard = ({ event }) => {
             <FaCalendarAlt />
             <span>{event.date}</span>
           </div>
+
           <div className="flex items-center gap-2">
             <FaUser />
-            <span>{event.organizer}</span>
+            <span>{event.organizer || "College Committee"}</span>
           </div>
+
           <div className="flex items-center gap-2">
             <FaMapMarkerAlt />
-            <span>{event.location}</span>
+            <span>{event.location || "Campus Venue"}</span>
           </div>
         </div>
 

@@ -101,6 +101,12 @@ export const EventProvider = ({ children }) => {
     setEvents((prev) => prev.filter((e) => e.id !== id));
   };
 
+  ///////////// Approved Events ????????????????
+
+  const approvedEvents = events.filter(
+  (event) => event.status === "approved"
+);
+
   return (
     <EventContext.Provider
       value={{
@@ -109,6 +115,7 @@ export const EventProvider = ({ children }) => {
         updateEventStatus,
         updateEvent,
         deleteEvent,
+        approvedEvents,
       }}
     >
       {children}
