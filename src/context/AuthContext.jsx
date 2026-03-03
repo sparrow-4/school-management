@@ -18,10 +18,7 @@ export const AuthProvider = ({ children }) => {
       email: "thoyyibcherur@gmail.com",
       password: "123",
     },
-    student: {
-      email: "student@gmail.com",
-      password: "123",
-    }
+    
   };
 
   const [mail, setMail] = useState(null);
